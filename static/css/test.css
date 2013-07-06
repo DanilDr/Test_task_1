@@ -1,0 +1,8 @@
+.form-row label {
+	width: 15em;
+}
+
+.field-follow_ids>div>select {
+	width: 20em;
+	height: 15em;
+}
