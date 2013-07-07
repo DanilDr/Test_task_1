@@ -8,7 +8,7 @@ from django.contrib import admin
 from main.models import Followers
 
 class FollowersAdmin(admin.ModelAdmin):
-    list_display = ('name', 'numpersecuted', 'numpursuers')
+    list_display = ('name', 'numfollower', 'numpursuers')
     ordering = ('name',)
     class Media:
         css = {'all' : ['/static/css/test.css',]}

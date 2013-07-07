@@ -1,32 +1,38 @@
 # -*- coding: utf-8 -*-
 
 from django.db import models
-from django.db import connection
+
 
 class Followers(models.Model):
     name = models.CharField(max_length=32, verbose_name="Имя")
     follow_ids = models.TextField(blank=True, null=True, verbose_name="ID преследуемых")
-    numpersecuted = models.IntegerField(default=0, verbose_name='Количество преследуемых')
-    numpursuers = models.IntegerField(default=0, verbose_name='Количество преследователей')
+    pursuers = models.TextField(blank=True, null=True, verbose_name="ID преследователей")
+    #numpersecuted = models.IntegerField(default=0, verbose_name='Количество преследуемых')
+    #numpursuers = models.IntegerField(default=0, verbose_name='Количество преследователей')
     class Meta:
         db_table = u"man_man"
         ordering = ['id', ]
     def __unicode__(self):
         return self.name
-    def save(self, parent=False, *args, **kwargs):
-        listpersecuted = [int(idf) for idf in self.follow_ids.split(' ') if idf.isdigit()]
-        self.numpersecuted = len(listpersecuted) # запись количества преследуемых
-        sqlstr = r"select * from man_man where follow_ids like %s or follow_ids like %s or follow_ids like %s"
-        cursor = connection.cursor()
-        cursor.execute(sqlstr, ['% ' + str(self.id) + ' %', '% ' + str(self.id), str(self.id) + ' %' ]) # sql запрос по поиску преследователей
-        self.numpursuers = len(cursor.fetchall())  # запись количества преследователей
-        super(Followers, self).save(*args, **kwargs)
-        if parent == False:
-            querypersecuted = Followers.objects.filter(id__in=listpersecuted)
-            for follower in querypersecuted:
-                follower.save(parent=True)
-        else:
-            pass
-
-
+    def numfollower(self): # количество преследуемых
+        return FollowerFollower.objects.filter(id_follower = self.id).count()
+    def numpursuers(self): # количество преследователей
+        return FollowerFollower.objects.filter(id_pursuers = self.id).count()
+    def save(self, *args, **kwargs):
+        list_folowers = self.follow_ids.split(' ')
+        FollowerFollower.objects.filter(id_follower=self.id).delete()
+        [FollowerFollower.objects.get_or_create(id_follower=self.id, id_pursuers = int(follower)) 
+            for follower in list_folowers if follower.isdigit()]
         
+        list_pursuers = self.pursuers.split(' ')
+        FollowerFollower.objects.filter(id_pursuers=self.id).delete()
+        [FollowerFollower.objects.get_or_create(id_follower=pursuer, id_pursuers = int(self.id)) 
+            for pursuer in list_pursuers if pursuer.isdigit()]
+        
+        super(Followers, self).save(*args, **kwargs)
+
+class FollowerFollower(models.Model):
+    id_follower = models.IntegerField(blank=True, null=True) # преследователь
+    id_pursuers = models.IntegerField(blank=True, null=True) # преследуемый
+    def __unicode__(self):
+        return u"%s - %s" % (self.id_follower, self.id_pursuers)
